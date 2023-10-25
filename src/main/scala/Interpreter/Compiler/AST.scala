@@ -87,12 +87,14 @@ object StatementAST {
     assert(!tokens_init.contains(Tokens.WHITESPACE))
     val tokens = tokens_init.filterNot(t => t == Tokens.NEWLINE)
     if (tokens.head.isIdentifier) {
+      if (tokens.length == 1){
+        return ExpressionAST.generate(tokens)
+      }
       tokens(1) match {
-        case Tokens.ASSIGNMENT => {
+        case Tokens.ASSIGNMENT =>
           val expressionAST = ExpressionAST.generate(tokens.drop(2))
           VarAssignmentAST(tokens.head.name, expressionAST)
-        }
-        case Tokens.LEFT_PARENTHESES => {
+        case Tokens.LEFT_PARENTHESES =>
           //println(tokens.drop(1))
           val (items, i) = Util.readParentheses(tokens.drop(1))
           val pointer = i + 1
@@ -115,7 +117,8 @@ object StatementAST {
               case _ => ExpressionAST.generate(tokens)
             }
           }
-        }
+        case _ =>
+          ExpressionAST.generate(tokens)
       }
     }
     else {

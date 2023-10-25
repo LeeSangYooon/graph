@@ -23,10 +23,10 @@ object Tokenizer {
               tokens = tokens.appended(Tokens.ASSIGNMENT)
             }
 
-          } else if (string.length >= i + 4 && string.slice(i, i + 4) == "func") {
+          } /*else if (string.length >= i + 4 && string.slice(i, i + 4) == "func") {
             tokens = tokens.appended(Tokens.FUNC)
             i += 3
-          } else if (string.length >= i + 2 && string.slice(i, i + 2) == "if") {
+          }*/ else if (string.length >= i + 2 && string.slice(i, i + 2) == "if") {
             tokens = tokens.appended(Tokens.IF)
             i += 1
           } else if (string.length >= i+4 && (string.slice(i, i + 4) == "elif" || string.slice(i, i + 4) == "else")) {
@@ -39,7 +39,7 @@ object Tokenizer {
             }
           } else {
             var s = ""
-            while (i < string.length && (string(i).isLetterOrDigit || string(i) == '.')) {
+            while (i < string.length && (string(i).isLetterOrDigit || string(i) == '_' || string(i) == '.')) {
               s = s.appended(string(i))
               i += 1
             }

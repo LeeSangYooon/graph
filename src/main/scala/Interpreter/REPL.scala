@@ -8,6 +8,9 @@ import Interpreter.Code
 class REPL(lines: List[String], virtualMachine: VirtualMachine, compiler: Compiler = new Compiler) {
   def prompt(): REPL = {
     //println(virtualMachine)
+    if (lines.isEmpty) {
+      println(Console.BLUE + "type #help to see commands" + Console.BLACK)
+    }
     print(">> ")
     val input = readLine()
     val code = compiler.compile(input)

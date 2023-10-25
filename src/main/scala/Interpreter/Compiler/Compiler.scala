@@ -9,18 +9,12 @@ import scala.collection.mutable
 
 class Compiler {
   private def show(code: Code): Unit = println(code.bytecodes.mkString("\n"), code.functions)
-  private var functions: mutable.Map[String, Func] = mutable.Map()
-  private var variables: mutable.Set[String] = mutable.Set()
 
   def compile(string: String): Code =  {
     val tokens = tokenize(string)
     val ast = RootAST.generate(tokens)
-    println(ast)
-    val code = generateByteCode(ast, functions, variables)
+    val code = generateByteCode(ast, mutable.Map(), mutable.Set())
     show(code)
     code
   }
-
-
-
 }

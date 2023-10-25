@@ -15,12 +15,15 @@ case class Output (string: String = null, pixels: Array[Array[Double]] = null, f
 
 
   def show(vm: VirtualMachine = null): Unit = {
+    print(Console.BLUE)
     if (string != null) {
       println(string)
     }
     if (func != null) {
       showGraph(vm)
     }
+    print(Console.BLACK)
+
   }
 
   private def showGraph(vm: VirtualMachine): Unit = {
@@ -42,7 +45,7 @@ case class Output (string: String = null, pixels: Array[Array[Double]] = null, f
       for (x <- 0 until width) {
         val xValue = (x.toFloat / width - 0.5) * range * 2
         val prompt = Code(List(ByteCode.PUSH(xValue), ByteCode.Call(name)))
-        val yValue = vm.copy().run(prompt).memory.stack.last
+        val yValue = vm.run(prompt).memory.stack.last
         val y = ((-yValue / range + 1) / 2 * height).round.toInt
         //println(x, xValue, y, yValue)
         if(0 <= y && y < height) {
@@ -59,7 +62,7 @@ case class Output (string: String = null, pixels: Array[Array[Double]] = null, f
           ByteCode.PUSH(yValue),
           ByteCode.Call(name)
         ))
-        val value = vm.copy().run(prompt).memory.stack.last
+        val value = vm.run(prompt).memory.stack.last
         val color = getColor(value)
         image.setRGB(x, y, color.getRGB)
       }

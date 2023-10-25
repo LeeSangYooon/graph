@@ -1,8 +1,9 @@
 package Interpreter.VirtualMachine
 
 import Interpreter.Output
-
-case class Memory(_stack: List[Double] = List(), _constants: Map[String, Double] = Map(), _functions: Map[String, Func] = Map(), _output: Output = null) {
+case class Memory(_stack: List[Double] = List(),
+                  _constants: Map[String, Double] = Map("pi" -> 3.14159265358979311599796346854, "e" -> 2.718281828459045235360287471352),
+                  _functions: Map[String, Func] = Map(), _output: Output = null) {
   val stack: List[Double] = _stack
   val constants: Map[String, Double] = _constants
   val functions: Map[String, Func] = _functions
