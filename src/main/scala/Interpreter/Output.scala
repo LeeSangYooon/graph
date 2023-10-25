@@ -41,13 +41,11 @@ case class Output (string: String = null, pixels: Array[Array[Double]] = null, f
     drawLine(y = height / 2, size = 4, color = Color.darkGray)
 
     if (dimension == 1) {
-
       for (x <- 0 until width) {
         val xValue = (x.toFloat / width - 0.5) * range * 2
         val prompt = Code(List(ByteCode.PUSH(xValue), ByteCode.Call(name)))
         val yValue = vm.run(prompt).memory.stack.last
         val y = ((-yValue / range + 1) / 2 * height).round.toInt
-        //println(x, xValue, y, yValue)
         if(0 <= y && y < height) {
           drawCircle(x, y, 4, lineColor)
         }

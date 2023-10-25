@@ -20,13 +20,14 @@ class REPL(lines: List[String], virtualMachine: VirtualMachine, compiler: Compil
     if (output != null) {
       output.show(newVirtualMachine)
     }
-    new REPL(lines.appended(input), newVirtualMachine, compiler)
+    val stackEmpty = newVirtualMachine.copy(memory_init = newVirtualMachine.memory.copy(_stack = List.empty), show=true)
+    new REPL(lines.appended(input), stackEmpty, compiler)
   }
 }
 
 object REPL{
   def init: REPL = {
-    val vm = VirtualMachine(Memory())
+    val vm = VirtualMachine(Memory(), show=true)
     new REPL(List(), vm)
   }
 }

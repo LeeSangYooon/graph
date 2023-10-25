@@ -4,7 +4,7 @@ import Interpreter.{ByteCode, Output}
 import Interpreter.Code
 
 
-case class VirtualMachine(memory_init: Memory){
+case class VirtualMachine(memory_init: Memory, show:Boolean=false){
   val memory: Memory = memory_init
   def run(code: Code): VirtualMachine = {
     val lines = code.bytecodes
@@ -62,7 +62,7 @@ case class VirtualMachine(memory_init: Memory){
               }
               else {
                 val func = stepMemory.functions(funcName)
-                var new_machine = this.copy(memory_init = stepMemory)
+                var new_machine = this.copy(memory_init = stepMemory, show=false)
                 for (param <- func.params.reverse) {
                   val varMap = new_machine.memory.constants ++ Map(param -> new_machine.memory.stack.last)
                   val stack = new_machine.memory.stack.dropRight(1)
@@ -80,7 +80,10 @@ case class VirtualMachine(memory_init: Memory){
         }
     }
     if (code.functions.isEmpty) {
-      VirtualMachine(stepMemory)
+      if (stepMemory.stack.isEmpty || !show)
+        VirtualMachine(stepMemory)
+      else
+        VirtualMachine(stepMemory.output(Output(stepMemory.stack.last.toString)))
     } else {
       val func_updated_memory = stepMemory.func_added(code.functions)
       val added_func = code.functions.head._2

@@ -122,13 +122,7 @@ object StatementAST {
       }
     }
     else {
-      throw new Exception("not implemented")
-      new StatementAST
-      /*
-      // 명령어 키워드 or 표현식
-      tokens(1) match {
-
-      }*/
+      ExpressionAST.generate(tokens)
     }
   }
 
