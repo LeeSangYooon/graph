@@ -33,4 +33,8 @@ object Tokens {
   val ELSE: Token = Token(18, "else")
   val WHITESPACE: Token = Token(19, " ")
   val NEWLINE: Token = Token(20, "\n")
+  val AND: Token = Token(21, "and")
+  val OR: Token = Token(22, "or")
+  val GREATER_OR_EQUAL: Token = Token(23, ">=")
+  val LESSER_OR_EQUAL: Token = Token(24, "<=")
 }

@@ -10,7 +10,7 @@ object Tokenizer {
         '{' -> Tokens.LEFT_BRACE, '}' -> Tokens.RIGHT_BRACE,
         '+' -> Tokens.PLUS, '-' -> Tokens.MINUS, '*' -> Tokens.MULTI, '/' -> Tokens.DIV, '^' -> Tokens.POW,
         ',' -> Tokens.COMMA,
-        '>' -> Tokens.GREATER, '<' -> Tokens.LESSER, ' ' -> Tokens.WHITESPACE, '\n' -> Tokens.NEWLINE
+        ' ' -> Tokens.WHITESPACE, '\n' -> Tokens.NEWLINE
       )
       dict.get(c) match {
         case Some(value) => tokens = tokens.appended(value)
@@ -23,10 +23,36 @@ object Tokenizer {
               tokens = tokens.appended(Tokens.ASSIGNMENT)
             }
 
-          } /*else if (string.length >= i + 4 && string.slice(i, i + 4) == "func") {
+          }
+          else if (c == '>') {
+            if (string(i + 1) == '=') { // >=
+              i += 1
+              tokens = tokens.appended(Tokens.GREATER_OR_EQUAL)
+            } else { // >
+              tokens = tokens.appended(Tokens.GREATER)
+            }
+          }
+          else if (c == '<') {
+            if (string(i + 1) == '=') { // <=
+              i += 1
+              tokens = tokens.appended(Tokens.LESSER_OR_EQUAL)
+            } else { // <
+              tokens = tokens.appended(Tokens.LESSER)
+            }
+          }
+          /*else if (string.length >= i + 4 && string.slice(i, i + 4) == "func") {
             tokens = tokens.appended(Tokens.FUNC)
             i += 3
-          }*/ else if (string.length >= i + 2 && string.slice(i, i + 2) == "if") {
+          }*/
+          else if (string.length >= i + 3 && string.slice(i, i + 3) == "and") {
+            tokens = tokens.appended(Tokens.AND)
+            i += 2
+          }
+          else if (string.length >= i + 2 && string.slice(i, i + 2) == "or") {
+            tokens = tokens.appended(Tokens.OR)
+            i += 1
+          }
+          else if (string.length >= i + 2 && string.slice(i, i + 2) == "if") {
             tokens = tokens.appended(Tokens.IF)
             i += 1
           } else if (string.length >= i+4 && (string.slice(i, i + 4) == "elif" || string.slice(i, i + 4) == "else")) {

@@ -12,6 +12,13 @@ object ByteCodeGenerator {
     case Tokens.MULTI => ByteCode.MULTI
     case Tokens.DIV => ByteCode.DIV
     case Tokens.POW => ByteCode.POWER
+    case Tokens.EQUAL => ByteCode.EQUAL
+    case Tokens.GREATER => ByteCode.GREATER
+    case Tokens.LESSER => ByteCode.LESSER
+    case Tokens.AND => ByteCode.AND
+    case Tokens.OR => ByteCode.OR
+    case Tokens.GREATER_OR_EQUAL => ByteCode.GREATER_OR_EQUAL
+    case Tokens.LESSER_OR_EQUAL => ByteCode.LESSER_OR_EQUAL
   }
   private def generateExp(exp: ExpressionAST): Code = {
     exp match {
@@ -28,6 +35,28 @@ object ByteCodeGenerator {
             param_expressions + call_expression
           }
         }
+      case i: IfElseAST => {
+        // i.cond
+        // if
+        // skip i.ifElse.length + 2 (맞으면 밑에 세개 스킵)
+        // pop
+        // i.ifElse
+        // skip ifThen.length + 1 (else 돈 놈이 밑에꺼 두개)
+        // pop
+        // i.ifThen
+        println(i)
+        val firstSkipLength = generateExp(i.ifElse).bytecodes.length + 2 // if true
+        val secondSkipLength = generateExp(i.ifThen).bytecodes.length + 1 // if false
+        generateExp(i.condition) +
+          Code(List(ByteCode.IF)) +
+          Code(List(ByteCode.SKIP(firstSkipLength))) +
+          Code(List(ByteCode.POP)) +
+          generateExp(i.ifElse) +
+          Code(List(ByteCode.SKIP(secondSkipLength))) +
+          Code(List(ByteCode.POP)) +
+          generateExp(i.ifThen)
+      }
+
     }
   }
 

@@ -3,51 +3,8 @@ package Interpreter.Compiler
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-object Util {
-  def addPadding(string: String): String =
-    string.split('\n').map(s => "\n.."+s).foldLeft("")(_+_)
-
-  def readParentheses(tokens: List[Token]): (List[List[Token]], Int) = {
-    //println(tokens)
-    assert(tokens.head == Tokens.LEFT_PARENTHESES)
-    var i = 1
-    var array = Array[List[Token]]()
-    var stop = false
-    while (i < tokens.length && !stop) {
-      tokens(i) match {
-        case Tokens.COMMA => throw new Exception()
-        case _ => {
-          var j = i
-          var opens = 0
-          while (!(opens == 0 && tokens(j) == Tokens.COMMA) && !(opens == 0 && tokens(j) == Tokens.RIGHT_PARENTHESES)) {
-            assert(opens >= 0)
-            val delta = tokens(j) match {
-              case Tokens.LEFT_BRACE => 1
-              case Tokens.LEFT_PARENTHESES => 1
-              case Tokens.RIGHT_BRACE => -1
-              case Tokens.RIGHT_PARENTHESES => -1
-              case _ => 0
-            }
-            opens += delta
-            j += 1
-          }
-          val exp = tokens.slice(i, j)
-          array = array.appended(exp)
-          i = j
-
-          if (opens == 0 && tokens(j) == Tokens.RIGHT_PARENTHESES)
-            stop = true
-        }
-      }
-      i += 1
-    }
-    (array.toList, i)
-  }
-
-}
-
 class AST {
-
+  override def toString: String = "\n" + super.toString
 }
 
 case class RootAST(statements: List[StatementAST]) extends AST
@@ -142,15 +99,24 @@ case class FuncDeclAST(func_name:String, params: List[String], exp: ExpressionAS
 // 2 72 5
 // + + +
 // 1 + 2 * 3 ^ 4
+// 1 + if (1 > 2) {3} elif (1 == 2) {2} else {1}
+
 abstract class ExpressionAST() extends StatementAST
 
 object ExpressionAST {
   def generate(tokens: List[Token]): ExpressionAST = {
+    if (tokens.head == Tokens.IF) {
+      return IfElseAST.generate(tokens)
+    }
+
     var i = 0
     val expStack = mutable.Stack[ExpressionAST]()
     val opStack = mutable.Stack[Token]()
 
     val level = (t: Token) => t match {
+      case Tokens.OR => -3
+      case Tokens.AND => -2
+      case Tokens.EQUAL | Tokens.GREATER | Tokens.LESSER | Tokens.GREATER_OR_EQUAL | Tokens.LESSER_OR_EQUAL=> -1
       case Tokens.PLUS | Tokens.MINUS => 0
       case Tokens.MULTI | Tokens.DIV => 1
       case Tokens.POW => 2
@@ -158,11 +124,14 @@ object ExpressionAST {
     }
 
     val isOp = (token: Token) => token == Tokens.PLUS || token == Tokens.MINUS ||
-      token == Tokens.MULTI || token == Tokens.DIV || token == Tokens.POW
+      token == Tokens.MULTI || token == Tokens.DIV || token == Tokens.POW ||
+      token == Tokens.EQUAL || token == Tokens.GREATER || token == Tokens.LESSER ||
+      token == Tokens.AND || token == Tokens.OR || token == Tokens.GREATER_OR_EQUAL || token == Tokens.LESSER_OR_EQUAL
 
     while (i < tokens.length) {
       val token = tokens(i)
       if (isOp(token)) {
+
         while (opStack.nonEmpty && level(opStack.top) >= level(token)) {
           val (right, left) = (expStack.pop(), expStack.pop())
           val op = opStack.pop()
@@ -194,7 +163,7 @@ object ExpressionAST {
       }
       else {
         //println(token)
-        throw new Exception("")
+        throw new Exception(tokens.toString)
       }
       // 괄호 추가
       i += 1
@@ -215,14 +184,64 @@ object ExpressionAST {
   }
 }
 
+case class IfElseAST(condition: ExpressionAST, ifThen: ExpressionAST, ifElse: ExpressionAST) extends ExpressionAST {
+  override def toString: String = f"if ${Util.addPadding(condition.toString)} \n then ${Util.addPadding(ifThen.toString)} \n else ${Util.addPadding(ifElse.toString)}"
+}
+
+object IfElseAST {
+  def generate(tokens: List[Token]): ExpressionAST = {
+    val (ifCondTemp, ifCondIndex) = Util.readParentheses(tokens.tail)
+    val ifCond = ExpressionAST.generate(ifCondTemp.head)
+    val tokensAfterIfCond = tokens.drop(ifCondIndex + 1)
+    val (ifExpTemp, ifExpIndex) = Util.readBraces(tokensAfterIfCond)
+    val ifExp = ExpressionAST.generate(ifExpTemp.head)
+    val tokensAfterIfExp = tokensAfterIfCond.drop(ifExpIndex)
+
+    var tokensAfterElif = tokensAfterIfExp
+    var elifPairList = List[(ExpressionAST, ExpressionAST)]()
+    while (tokensAfterElif.head == Tokens.ELIF) {
+      val (elifCondTemp, elifCondIndex) = Util.readParentheses(tokensAfterElif.tail)
+      val elifCond = ExpressionAST.generate(elifCondTemp.head)
+      val tokensAfterElifCond = tokensAfterElif.drop(elifCondIndex + 1)
+      val (elifExpTemp, elifExpIndex) = Util.readBraces(tokensAfterElifCond)
+      val elifExp = ExpressionAST.generate(elifExpTemp.head)
+      val tokensAfterElifExp = tokensAfterElifCond.drop(elifExpIndex)
+
+      elifPairList = elifPairList :+ (elifCond, elifExp)
+      tokensAfterElif = tokensAfterElifExp
+
+    }
+    assert(tokensAfterElif.head == Tokens.ELSE)
+
+    val (elseExpTemp, elseExpIndex) = Util.readBraces(tokensAfterElif.tail)
+    val elseExp = ExpressionAST.generate(elseExpTemp.head)
+    val tokensAfterElseExp = tokensAfterElif.drop(elseExpIndex + 1)
+
+    assert(tokensAfterElseExp.isEmpty)
+
+    val conditions = ifCond +: elifPairList.map(t => t._1)
+    val expressions = ifExp +: elifPairList.map(t => t._2) :+ elseExp
+
+    assert(conditions.length + 1 == expressions.length)
+
+    def generateIfElseTree(cons: List[ExpressionAST], exps: List[ExpressionAST]): ExpressionAST =
+      if (cons.isEmpty)
+        exps.head
+      else
+        IfElseAST(cons.head, exps.head, generateIfElseTree(cons.tail, exps.tail))
+
+    val ifElseTree = generateIfElseTree(conditions, expressions)
+    ifElseTree
+  }
+}
+
 class BinaryOperationAST(_left: ExpressionAST, _right: ExpressionAST, _op: Token) extends ExpressionAST {
   val left: ExpressionAST = _left
   val right: ExpressionAST = _right
   val op: Token = _op
   override def toString: String = f"(${op.toString} ${left}, ${right})"   /*op.toString + Util.addPadding(left.toString) + Util.addPadding(right.toString)*/
 }
-class AtomAST() extends ExpressionAST {
-}
+class AtomAST() extends ExpressionAST
 class ValueAST(_value: Double) extends AtomAST {
   val value: Double = _value
   override def toString: String = "value: " + value.toString

@@ -1,19 +1,19 @@
 precision = 500
-mandelbrot(x, y, n) =
-    if (n == 0) {precision}
-    else {
-        if (x^2 + y^2 > 4) {
+# not show
+mandelbrot(x, y, a, b, n) =
+    if (n == 0)
+        precision
+    else
+        if (x^2 + y^2 > 4)
             n
-        } else {
+        else
             mandelbrot(x, y, n - 1)
-        }
-    }
 
-color(x, y) = {
-    mandelbrot(x, y, precision)
-}
+
+
+color(x, y) = mandelbrot(x, y, precision)
 graph = [color, x: -2 ~ 2, y: -2 ~ 2]
-show graph
+#show graph
 
 
 derivative(f) = x => (limit h -> 0: (f(x + h) - f(x)) / h)
